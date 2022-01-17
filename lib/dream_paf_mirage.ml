@@ -20,16 +20,16 @@ module type S = sig
   val close : t -> unit Lwt.t
 
   val http_service :
-    ?config:Httpaf.Config.t ->
-    error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
-    (dst -> Httpaf.Server_connection.request_handler) ->
+    ?config:Dream_httpaf.Config.t ->
+    error_handler:(dst -> Dream_httpaf.Server_connection.error_handler) ->
+    (dst -> Dream_httpaf.Server_connection.request_handler) ->
     t Dream_paf.service
 
   val https_service :
     tls:Tls.Config.server ->
-    ?config:Httpaf.Config.t ->
-    error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
-    (dst -> Httpaf.Server_connection.request_handler) ->
+    ?config:Dream_httpaf.Config.t ->
+    error_handler:(dst -> Dream_httpaf.Server_connection.error_handler) ->
+    (dst -> Dream_httpaf.Server_connection.request_handler) ->
     t Dream_paf.service
 
   val serve :
@@ -56,7 +56,7 @@ module type S = sig
     ctx:Mimic.ctx ->
     error_handler:(dst option -> Alpn.client_error -> unit) ->
     response_handler:(dst option -> Alpn.response -> Alpn.body -> unit) ->
-    [ `V1 of Httpaf.Request.t | `V2 of H2.Request.t ] ->
+    [ `V1 of Dream_httpaf.Request.t | `V2 of H2.Request.t ] ->
     (Alpn.body, [> Mimic.error ]) result Lwt.t
 end
 
@@ -196,10 +196,10 @@ module Make (Time : Mirage_time.S) (Stack : Mirage_stack.V4V6) :
       let error_handler = error_handler dst in
       let request_handler = request_handler dst in
       let conn =
-        Httpaf.Server_connection.create ?config ~error_handler request_handler
+        Dream_httpaf.Server_connection.create ?config ~error_handler request_handler
       in
       Lwt.return_ok
-        (R.T flow, Dream_paf.Runtime ((module Httpaf.Server_connection), conn)) in
+        (R.T flow, Dream_paf.Runtime ((module Dream_httpaf.Server_connection), conn)) in
     Dream_paf.service connection accept close
 
   let https_service ~tls ?config ~error_handler request_handler =
@@ -227,10 +227,10 @@ module Make (Time : Mirage_time.S) (Stack : Mirage_stack.V4V6) :
       let error_handler = error_handler dst in
       let request_handler = request_handler dst in
       let conn =
-        Httpaf.Server_connection.create ?config ~error_handler request_handler
+        Dream_httpaf.Server_connection.create ?config ~error_handler request_handler
       in
       Lwt.return_ok
-        (R.T flow, Dream_paf.Runtime ((module Httpaf.Server_connection), conn)) in
+        (R.T flow, Dream_paf.Runtime ((module Dream_httpaf.Server_connection), conn)) in
     Dream_paf.service connection accept close
 
   let serve ?stop service t = Dream_paf.serve ~sleep:Time.sleep_ns ?stop service t

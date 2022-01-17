@@ -27,9 +27,9 @@ module type S = sig
   (** [close t] closes the main {e socket}. *)
 
   val http_service :
-    ?config:Httpaf.Config.t ->
-    error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
-    (dst -> Httpaf.Server_connection.request_handler) ->
+    ?config:Dream_httpaf.Config.t ->
+    error_handler:(dst -> Dream_httpaf.Server_connection.error_handler) ->
+    (dst -> Dream_httpaf.Server_connection.request_handler) ->
     t Dream_paf.service
   (** [http_service ~error_handler request_handler] makes an HTTP/AF service
       where any HTTP/1.1 requests are handled by [request_handler]. The returned
@@ -37,9 +37,9 @@ module type S = sig
 
   val https_service :
     tls:Tls.Config.server ->
-    ?config:Httpaf.Config.t ->
-    error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
-    (dst -> Httpaf.Server_connection.request_handler) ->
+    ?config:Dream_httpaf.Config.t ->
+    error_handler:(dst -> Dream_httpaf.Server_connection.error_handler) ->
+    (dst -> Dream_httpaf.Server_connection.request_handler) ->
     t Dream_paf.service
   (** [https_service ~tls ~error_handler request_handler] makes an HTTP/AF
       service over TLS (from the given TLS configuration). Then, HTTP/1.1
@@ -72,7 +72,7 @@ module type S = sig
     ctx:Mimic.ctx ->
     error_handler:(dst option -> Alpn.client_error -> unit) ->
     response_handler:(dst option -> Alpn.response -> Alpn.body -> unit) ->
-    [ `V1 of Httpaf.Request.t | `V2 of H2.Request.t ] ->
+    [ `V1 of Dream_httpaf.Request.t | `V2 of H2.Request.t ] ->
     (Alpn.body, [> Mimic.error ]) result Lwt.t
 end
 

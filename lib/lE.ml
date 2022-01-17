@@ -23,8 +23,8 @@ let ipaddr = Mimic.make ~name:"paf-le-ipaddr"
 
 let sleep = Mimic.make ~name:"paf-le-sleep"
 
-module Httpaf_Client_connection = struct
-  include Httpaf.Client_connection
+module Dream_httpaf_Client_connection = struct
+  include Dream_httpaf.Client_connection
 
   let yield_reader _ = assert false
 
@@ -72,24 +72,24 @@ let with_host headers uri =
     match Uri.port uri with
     | Some port -> Fmt.str "%s:%d" hostname port
     | None -> hostname in
-  Httpaf.Headers.add_unless_exists headers "host" hostname
+  Dream_httpaf.Headers.add_unless_exists headers "host" hostname
 
 let with_transfer_encoding ~chunked (meth : [ `GET | `HEAD | `POST ]) body
     headers =
-  match (meth, chunked, body, Httpaf.Headers.get headers "content-length") with
+  match (meth, chunked, body, Dream_httpaf.Headers.get headers "content-length") with
   | `GET, _, _, _ -> headers
   | _, (None | Some false), _, Some _ -> headers
   | _, Some true, _, (Some _ | None) | _, None, `Stream _, None ->
       (* XXX(dinosaure): I'm not sure that the [Some _] was right. *)
-      Httpaf.Headers.add_unless_exists headers "transfer-encoding" "chunked"
+      Dream_httpaf.Headers.add_unless_exists headers "transfer-encoding" "chunked"
   | _, (None | Some false), `Empty, None ->
-      Httpaf.Headers.add_unless_exists headers "content-length" "0"
+      Dream_httpaf.Headers.add_unless_exists headers "content-length" "0"
   | _, (None | Some false), `String str, None ->
-      Httpaf.Headers.add_unless_exists headers "content-length"
+      Dream_httpaf.Headers.add_unless_exists headers "content-length"
         (string_of_int (String.length str))
   | _, (None | Some false), `Strings sstr, None ->
       let len = List.fold_right (( + ) <.> String.length) sstr 0 in
-      Httpaf.Headers.add_unless_exists headers "content-length"
+      Dream_httpaf.Headers.add_unless_exists headers "content-length"
         (string_of_int len)
   | _, Some false, `Stream _, None ->
       invalid_arg "Impossible to transfer a stream with a content-length value"
@@ -99,7 +99,7 @@ struct
   type ctx = Mimic.ctx
 
   module Headers = struct
-    include Httpaf.Headers
+    include Dream_httpaf.Headers
 
     let init_with field value = of_list [ (field, value) ]
 
@@ -125,11 +125,11 @@ struct
   end
 
   module Response = struct
-    include Httpaf.Response
+    include Dream_httpaf.Response
 
-    let status resp = Httpaf.Status.to_code resp.Httpaf.Response.status
+    let status resp = Dream_httpaf.Status.to_code resp.Dream_httpaf.Response.status
 
-    let headers resp = resp.Httpaf.Response.headers
+    let headers resp = resp.Dream_httpaf.Response.headers
   end
 
   let error_handler mvar err = Lwt.async @@ fun () -> Lwt_mvar.put mvar err
@@ -139,36 +139,36 @@ struct
     let rec on_read buf ~off ~len =
       let str = Bigstringaf.substring buf ~off ~len in
       pusher (Some str) ;
-      Httpaf.Body.Reader.schedule_read ~on_eof ~on_read body in
-    Httpaf.Body.Reader.schedule_read ~on_eof ~on_read body ;
+      Dream_httpaf.Body.Reader.schedule_read ~on_eof ~on_read body in
+    Dream_httpaf.Body.Reader.schedule_read ~on_eof ~on_read body ;
     Lwt.async @@ fun () -> Lwt_mvar.put mvar resp
 
   let rec unroll body stream =
     let open Lwt.Infix in
     Lwt_stream.get stream >>= function
     | Some str ->
-        Httpaf.Body.Writer.write_string body str ;
+        Dream_httpaf.Body.Writer.write_string body str ;
         unroll body stream
     | None ->
-        Httpaf.Body.Writer.close body ;
+        Dream_httpaf.Body.Writer.close body ;
         Lwt.return_unit
 
   let transmit cohttp_body httpaf_body =
     match cohttp_body with
-    | `Empty -> Httpaf.Body.Writer.close httpaf_body
+    | `Empty -> Dream_httpaf.Body.Writer.close httpaf_body
     | `String str ->
-        Httpaf.Body.Writer.write_string httpaf_body str ;
-        Httpaf.Body.Writer.close httpaf_body
+        Dream_httpaf.Body.Writer.write_string httpaf_body str ;
+        Dream_httpaf.Body.Writer.close httpaf_body
     | `Strings sstr ->
-        List.iter (Httpaf.Body.Writer.write_string httpaf_body) sstr ;
-        Httpaf.Body.Writer.close httpaf_body
+        List.iter (Dream_httpaf.Body.Writer.write_string httpaf_body) sstr ;
+        Dream_httpaf.Body.Writer.close httpaf_body
     | `Stream stream -> Lwt.async @@ fun () -> unroll httpaf_body stream
 
-  exception Invalid_response_body_length of Httpaf.Response.t
+  exception Invalid_response_body_length of Dream_httpaf.Response.t
 
   exception Malformed_response of string
 
-  let call ?(ctx = Mimic.empty) ?(headers = Httpaf.Headers.empty)
+  let call ?(ctx = Mimic.empty) ?(headers = Dream_httpaf.Headers.empty)
       ?(body = `Empty) ?chunked (meth : [ `GET | `HEAD | `POST ]) uri =
     let ctx = with_uri uri ctx in
     let sleep =
@@ -179,8 +179,8 @@ struct
     let headers = with_host headers uri in
     let headers = with_transfer_encoding ~chunked meth body headers in
     let req =
-      Httpaf.Request.create ~headers
-        (meth :> Httpaf.Method.t)
+      Dream_httpaf.Request.create ~headers
+        (meth :> Dream_httpaf.Method.t)
         (Uri.path_and_query uri) in
     let stream, pusher = Lwt_stream.create () in
     let mvar_res = Lwt_mvar.create_empty () in
@@ -192,12 +192,12 @@ struct
     | Ok flow -> (
         let error_handler = error_handler mvar_err in
         let response_handler = response_handler mvar_res pusher in
-        let conn = Httpaf.Client_connection.create ?config:None in
+        let conn = Dream_httpaf.Client_connection.create ?config:None in
         let httpaf_body =
-          Httpaf.Client_connection.request conn ~error_handler ~response_handler
+          Dream_httpaf.Client_connection.request conn ~error_handler ~response_handler
             req in
         Lwt.async (fun () ->
-          Dream_paf.run ~sleep (module Httpaf_Client_connection) conn flow) ;
+          Dream_paf.run ~sleep (module Dream_httpaf_Client_connection) conn flow) ;
         transmit body httpaf_body ;
         Lwt.pick
           [
@@ -263,28 +263,28 @@ module Make (Time : Mirage_time.S) (Stack : Mirage_stack.V4V6) = struct
   let request_handler (ipaddr, port) reqd =
     Log.debug (fun m ->
         m "Let's encrypt request handler for %a:%d" Ipaddr.pp ipaddr port) ;
-    let req = Httpaf.Reqd.request reqd in
-    match String.split_on_char '/' req.Httpaf.Request.target with
+    let req = Dream_httpaf.Reqd.request reqd in
+    match String.split_on_char '/' req.Dream_httpaf.Request.target with
     | [ p1; p2; token ]
       when String.equal p1 (fst prefix) && String.equal p2 (snd prefix) -> (
         match Hashtbl.find_opt tokens token with
         | Some data ->
             let headers =
-              Httpaf.Headers.of_list
+              Dream_httpaf.Headers.of_list
                 [
                   ("content-type", "application/octet-stream");
                   ("content-length", string_of_int (String.length data));
                 ] in
-            let resp = Httpaf.Response.create ~headers `OK in
-            Httpaf.Reqd.respond_with_string reqd resp data
+            let resp = Dream_httpaf.Response.create ~headers `OK in
+            Dream_httpaf.Reqd.respond_with_string reqd resp data
         | None ->
-            let headers = Httpaf.Headers.of_list [ ("connection", "close") ] in
-            let resp = Httpaf.Response.create ~headers `Not_found in
-            Httpaf.Reqd.respond_with_string reqd resp "")
+            let headers = Dream_httpaf.Headers.of_list [ ("connection", "close") ] in
+            let resp = Dream_httpaf.Response.create ~headers `Not_found in
+            Dream_httpaf.Reqd.respond_with_string reqd resp "")
     | _ ->
-        let headers = Httpaf.Headers.of_list [ ("connection", "close") ] in
-        let resp = Httpaf.Response.create ~headers `Not_found in
-        Httpaf.Reqd.respond_with_string reqd resp ""
+        let headers = Dream_httpaf.Headers.of_list [ ("connection", "close") ] in
+        let resp = Dream_httpaf.Response.create ~headers `Not_found in
+        Dream_httpaf.Reqd.respond_with_string reqd resp ""
 
   let provision_certificate ?(production = false) cfg ctx =
     let ( >>? ) = Lwt_result.bind in

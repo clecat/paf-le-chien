@@ -35,7 +35,7 @@ let ( >>? ) x f =
 
 let ( <.> ) f g x = f (g x)
 
-let response_handler th_err ~(f : Httpaf.Response.t -> string -> unit Lwt.t) _ :
+let response_handler th_err ~(f : Dream_httpaf.Response.t -> string -> unit Lwt.t) _ :
     Alpn.response -> Alpn.body -> unit =
  fun resp body ->
   match (resp, body) with
@@ -45,17 +45,17 @@ let response_handler th_err ~(f : Httpaf.Response.t -> string -> unit Lwt.t) _ :
       let buf = Buffer.create 0x100 in
       let th, wk = Lwt.wait () in
       let on_eof () =
-        Httpaf.Body.Reader.close body ;
+        Dream_httpaf.Body.Reader.close body ;
         Lwt.wakeup_later wk () in
       let rec on_read payload ~off ~len =
         Buffer.add_string buf (Bigstringaf.substring payload ~off ~len) ;
-        Httpaf.Body.Reader.schedule_read body ~on_eof ~on_read in
-      Httpaf.Body.Reader.schedule_read body ~on_eof ~on_read ;
+        Dream_httpaf.Body.Reader.schedule_read body ~on_eof ~on_read in
+      Dream_httpaf.Body.Reader.schedule_read body ~on_eof ~on_read ;
       Lwt.async @@ fun () ->
       Lwt.pick [ (th >|= fun () -> `Done); th_err ] >>= function
       | `Done -> f response (Buffer.contents buf)
       | _ ->
-          Httpaf.Body.Reader.close body ;
+          Dream_httpaf.Body.Reader.close body ;
           Lwt.return_unit)
   | _ -> assert false
 
@@ -162,10 +162,10 @@ let run uri =
   let ctx =
     match Uri.port uri with Some v -> Mimic.add port v ctx | None -> ctx in
   let headers =
-    Option.fold ~none:Httpaf.Headers.empty
-      ~some:(fun hostname -> Httpaf.Headers.of_list [ ("Host", hostname) ])
+    Option.fold ~none:Dream_httpaf.Headers.empty
+      ~some:(fun hostname -> Dream_httpaf.Headers.of_list [ ("Host", hostname) ])
       hostname in
-  let request = Httpaf.Request.create ~headers `GET (Uri.path uri) in
+  let request = Dream_httpaf.Request.create ~headers `GET (Uri.path uri) in
   let response_handler = response_handler th_err ~f in
   v >>= fun v ->
   let ctx = Mimic.add stack (Tcpip_stack_socket.V4V6.tcp v) ctx in
@@ -177,10 +177,10 @@ let run uri =
       Lwt.return_error err
   | Ok (Alpn.Body_HTTP_2_0 _) -> Lwt.return_error (`Msg "Invalid protocol (H2)")
   | Ok (Alpn.Body_HTTP_1_1 (Alpn.Wr, Alpn.Body_wr body)) -> (
-      Httpaf.Body.Writer.close body ;
+      Dream_httpaf.Body.Writer.close body ;
       Lwt.pick [ (th >|= fun body -> `Body body); th_err ] >>= function
       | `Body body -> Lwt.return_ok body
       | _ ->
-          Httpaf.Body.Writer.close body ;
+          Dream_httpaf.Body.Writer.close body ;
           Lwt.return_error (`Msg "Got an error while sending request"))
   | _ -> assert false

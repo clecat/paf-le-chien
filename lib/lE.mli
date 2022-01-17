@@ -22,7 +22,7 @@ module Make (Time : Mirage_time.S) (Stack : Mirage_stack.V4V6) : sig
   }
 
   val request_handler :
-    Ipaddr.t * int -> Httpaf.Server_connection.request_handler
+    Ipaddr.t * int -> Dream_httpaf.Server_connection.request_handler
 
   val provision_certificate :
     ?production:bool ->

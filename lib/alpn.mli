@@ -18,21 +18,21 @@ type body =
   | Body_HTTP_2_0 : 'c capability * 'c H2.Body.t -> body
 
 and _ httpaf_body =
-  | Body_wr : Httpaf.Body.Writer.t -> [ `write ] httpaf_body
-  | Body_rd : Httpaf.Body.Reader.t -> [ `read ] httpaf_body
+  | Body_wr : Dream_httpaf.Body.Writer.t -> [ `write ] httpaf_body
+  | Body_rd : Dream_httpaf.Body.Reader.t -> [ `read ] httpaf_body
 
 type response =
-  | Response_HTTP_1_1 of Httpaf.Response.t
+  | Response_HTTP_1_1 of Dream_httpaf.Response.t
   | Response_HTTP_2_0 of H2.Response.t
 
 type request =
-  | Request_HTTP_1_1 of Httpaf.Request.t
+  | Request_HTTP_1_1 of Dream_httpaf.Request.t
   | Request_HTTP_2_0 of H2.Request.t
 
-type reqd = Reqd_HTTP_1_1 of Httpaf.Reqd.t | Reqd_HTTP_2_0 of H2.Reqd.t
+type reqd = Reqd_HTTP_1_1 of Dream_httpaf.Reqd.t | Reqd_HTTP_2_0 of H2.Reqd.t
 
 type headers =
-  | Headers_HTTP_1_1 of Httpaf.Headers.t
+  | Headers_HTTP_1_1 of Dream_httpaf.Headers.t
   | Headers_HTTP_2_0 of H2.Headers.t
 
 type server_error =
@@ -130,14 +130,14 @@ val service :
 type client_error =
   [ `Exn of exn
   | `Malformed_response of string
-  | `Invalid_response_body_length_v1 of Httpaf.Response.t
+  | `Invalid_response_body_length_v1 of Dream_httpaf.Response.t
   | `Invalid_response_body_length_v2 of H2.Response.t
   | `Protocol_error of H2.Error_code.t * string ]
 
 val error_handler_v1 :
   'edn ->
   ('edn -> client_error -> unit) ->
-  Httpaf.Client_connection.error ->
+  Dream_httpaf.Client_connection.error ->
   unit
 
 val error_handler_v2 :
@@ -149,7 +149,7 @@ val run :
   error_handler:('edn -> client_error -> unit) ->
   response_handler:('edn -> response -> body -> unit) ->
   'edn ->
-  [ `V1 of Httpaf.Request.t | `V2 of H2.Request.t ] ->
+  [ `V1 of Dream_httpaf.Request.t | `V2 of H2.Request.t ] ->
   Mimic.flow ->
   (body, [> `Msg of string ]) result Lwt.t
 (** [run ~sleep ?alpn ~error_handler ~response_handler edn req flow] tries

@@ -146,7 +146,7 @@ let test01 =
   let response_handler () : Alpn.response -> Alpn.body -> unit = fun _ _ -> () in
   let service = service ~request_handler () in
   let tls = Tls.Config.client ~authenticator ~alpn_protocols:[ "http/1.1" ] () in
-  let req = `V1 (Httpaf.Request.create `GET "/") in
+  let req = `V1 (Dream_httpaf.Request.create `GET "/") in
   Lwt.both
     ( unix_stack () >|= Tcpip_stack_socket.V4V6.tcp >>= fun stack ->
       P.init ~port stack >>= fun t ->

@@ -51,7 +51,7 @@ let getline queue =
   | None -> None
 
 let http_large filename (_ip, _port) ic oc =
-  let open Httpaf in
+  let open Dream_httpaf in
   Body.Reader.close ic ;
   let ic = open_in filename in
   let tp = Bytes.create 0x1000 in
@@ -66,7 +66,7 @@ let http_large filename (_ip, _port) ic oc =
   close_in ic
 
 let http_ping_pong (_ip, _port) ic oc =
-  let open Httpaf in
+  let open Dream_httpaf in
   let open Lwt.Infix in
   let closed = ref false and queue = Ke.create ~capacity:0x1000 Bigarray.char in
 
@@ -95,7 +95,7 @@ let http_ping_pong (_ip, _port) ic oc =
   Lwt.async go
 
 let request_handler large (ip, port) reqd =
-  let open Httpaf in
+  let open Dream_httpaf in
   let request = Reqd.request reqd in
   match request.Request.target with
   | "/" ->

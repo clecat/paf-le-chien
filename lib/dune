@@ -8,7 +8,7 @@
  (name alpn)
  (public_name dream-paf.alpn)
  (modules alpn)
- (libraries paf httpaf h2))
+ (libraries dream-paf dream-httpaf h2))
 
 (library
  (name dream_paf_mirage)
@@ -20,12 +20,12 @@
  (name dream_paf_cohttp)
  (public_name dream-paf-cohttp)
  (modules dream_paf_cohttp)
- (libraries ipaddr domain-name paf httpaf cohttp-lwt))
+ (libraries ipaddr domain-name dream-paf dream-httpaf cohttp-lwt))
 
 (library
  (name le)
  (wrapped false)
  (public_name dream-paf-le)
  (modules lE)
- (libraries httpaf paf mirage-time mirage-stack duration tls-mirage emile
+ (libraries dream-httpaf dream-paf mirage-time mirage-stack duration tls-mirage emile
    letsencrypt))
