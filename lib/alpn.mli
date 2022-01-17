@@ -72,7 +72,7 @@ val service :
   request_handler:(string -> reqd -> unit) ->
   ('t -> ('flow, ([> `Closed | `Msg of string ] as 'error)) result Lwt.t) ->
   ('t -> unit Lwt.t) ->
-  't Paf.service
+  't Dream_paf.service
 (** [service info ~error_handler ~request_handler accept close] creates a new
     {!type:Paf.service} over the {i socket} ['t]. From the given implementation
     of [accept] and [close], we are able to instantiate the {i main loop}. Then,
@@ -144,7 +144,7 @@ val error_handler_v2 :
   'edn -> ('edn -> client_error -> unit) -> H2.Client_connection.error -> unit
 
 val run :
-  sleep:Paf.sleep ->
+  sleep:Dream_paf.sleep ->
   ?alpn:string ->
   error_handler:('edn -> client_error -> unit) ->
   response_handler:('edn -> response -> body -> unit) ->

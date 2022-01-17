@@ -7,13 +7,13 @@
  (name simple_server)
  (modules simple_server)
  (libraries mirage-time-unix logs.fmt fmt.tty mirage-crypto-rng.unix
-   tcpip.stack-socket paf.mirage))
+   tcpip.stack-socket dream-paf.mirage))
 
 (library
  (name simple_client)
  (modules simple_client)
  (libraries mirage-time-unix lwt.unix logs.fmt fmt.tty uri
-   mirage-crypto-rng.unix tcpip.stack-socket paf.mirage))
+   mirage-crypto-rng.unix tcpip.stack-socket dream-paf.mirage))
 
 (executable
  (name clients)
@@ -32,17 +32,17 @@
  (name test_alpn)
  (modules test_alpn)
  (libraries mirage-time-unix fmt.tty logs.fmt alcotest-lwt tcpip.stack-socket
-   paf.alpn paf.mirage mirage-crypto-rng.unix))
+   dream-paf.alpn dream-paf.mirage mirage-crypto-rng.unix))
 
 (executable
  (name test_cohttp)
  (modules test_cohttp)
  (libraries mirage-time-unix fmt.tty logs.fmt alcotest-lwt tcpip.stack-socket
-   cohttp-lwt paf-cohttp paf.mirage mirage-crypto-rng.unix astring))
+   cohttp-lwt dream-paf-cohttp dream-paf.mirage mirage-crypto-rng.unix astring))
 
 (rule
  (alias runtest)
- (package paf)
+ (package dream-paf)
  (deps server.pem server.key %{exe:test_alpn.exe})
  (enabled_if %{arch_sixtyfour})
  (action
@@ -50,7 +50,7 @@
 
 (rule
  (alias runtest)
- (package paf)
+ (package dream-paf)
  (locks m)
  (deps server.pem server.key file.txt %{exe:clients.exe}
    %{exe:simple_server.exe})
@@ -60,7 +60,7 @@
 (rule
  (alias runtest)
  (locks m)
- (package paf-cohttp)
+ (package dream-paf-cohttp)
  (deps server.pem server.key %{exe:test_cohttp.exe})
  (action
   (run ./test_cohttp.exe --color=always)))

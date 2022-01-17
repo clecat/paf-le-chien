@@ -30,7 +30,7 @@ module type S = sig
     ?config:Httpaf.Config.t ->
     error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
     (dst -> Httpaf.Server_connection.request_handler) ->
-    t Paf.service
+    t Dream_paf.service
   (** [http_service ~error_handler request_handler] makes an HTTP/AF service
       where any HTTP/1.1 requests are handled by [request_handler]. The returned
       service is not yet launched (see {!serve}). *)
@@ -40,14 +40,14 @@ module type S = sig
     ?config:Httpaf.Config.t ->
     error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
     (dst -> Httpaf.Server_connection.request_handler) ->
-    t Paf.service
+    t Dream_paf.service
   (** [https_service ~tls ~error_handler request_handler] makes an HTTP/AF
       service over TLS (from the given TLS configuration). Then, HTTP/1.1
       requests are handled by [request_handler]. The returned service is not yet
       launched (see {!serve}). *)
 
   val serve :
-    ?stop:Lwt_switch.t -> 't Paf.service -> 't -> [ `Initialized of unit Lwt.t ]
+    ?stop:Lwt_switch.t -> 't Dream_paf.service -> 't -> [ `Initialized of unit Lwt.t ]
   (** [serve ?stop service] returns an initialized promise of the given service
       [service]. [stop] can be used to stop the service. *)
 

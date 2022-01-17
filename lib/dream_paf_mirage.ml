@@ -23,17 +23,17 @@ module type S = sig
     ?config:Httpaf.Config.t ->
     error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
     (dst -> Httpaf.Server_connection.request_handler) ->
-    t Paf.service
+    t Dream_paf.service
 
   val https_service :
     tls:Tls.Config.server ->
     ?config:Httpaf.Config.t ->
     error_handler:(dst -> Httpaf.Server_connection.error_handler) ->
     (dst -> Httpaf.Server_connection.request_handler) ->
-    t Paf.service
+    t Dream_paf.service
 
   val serve :
-    ?stop:Lwt_switch.t -> 't Paf.service -> 't -> [ `Initialized of unit Lwt.t ]
+    ?stop:Lwt_switch.t -> 't Dream_paf.service -> 't -> [ `Initialized of unit Lwt.t ]
 
   val tcp_protocol : (stack * Ipaddr.t * int, TCP.flow) Mimic.protocol
 
@@ -199,8 +199,8 @@ module Make (Time : Mirage_time.S) (Stack : Mirage_stack.V4V6) :
         Httpaf.Server_connection.create ?config ~error_handler request_handler
       in
       Lwt.return_ok
-        (R.T flow, Paf.Runtime ((module Httpaf.Server_connection), conn)) in
-    Paf.service connection accept close
+        (R.T flow, Dream_paf.Runtime ((module Httpaf.Server_connection), conn)) in
+    Dream_paf.service connection accept close
 
   let https_service ~tls ?config ~error_handler request_handler =
     let module R = (val Mimic.repr tls_protocol) in
@@ -230,10 +230,10 @@ module Make (Time : Mirage_time.S) (Stack : Mirage_stack.V4V6) :
         Httpaf.Server_connection.create ?config ~error_handler request_handler
       in
       Lwt.return_ok
-        (R.T flow, Paf.Runtime ((module Httpaf.Server_connection), conn)) in
-    Paf.service connection accept close
+        (R.T flow, Dream_paf.Runtime ((module Httpaf.Server_connection), conn)) in
+    Dream_paf.service connection accept close
 
-  let serve ?stop service t = Paf.serve ~sleep:Time.sleep_ns ?stop service t
+  let serve ?stop service t = Dream_paf.serve ~sleep:Time.sleep_ns ?stop service t
 
   let alpn socket =
     match TLS.epoch socket with

@@ -77,17 +77,17 @@ let service info ~error_handler ~request_handler accept close =
         let conn =
           Httpaf.Server_connection.create ~error_handler request_handler in
         Lwt.return_ok
-          (flow, Paf.Runtime ((module Httpaf.Server_connection), conn))
+          (flow, Dream_paf.Runtime ((module Httpaf.Server_connection), conn))
     | Some "h2" ->
         let edn = info.peer flow in
         let flow = info.injection flow in
         let error_handler = error_handler_v2 edn error_handler in
         let request_handler = request_handler_v2 edn request_handler in
         let conn = H2.Server_connection.create ~error_handler request_handler in
-        Lwt.return_ok (flow, Paf.Runtime ((module H2.Server_connection), conn))
+        Lwt.return_ok (flow, Dream_paf.Runtime ((module H2.Server_connection), conn))
     | Some protocol ->
         Lwt.return_error (`Msg (Fmt.str "Invalid protocol %S." protocol)) in
-  Paf.service connection accept close
+  Dream_paf.service connection accept close
 
 type client_error =
   [ `Exn of exn
@@ -121,7 +121,7 @@ let run ~sleep ?alpn ~error_handler ~response_handler edn request flow =
         H2.Client_connection.request conn request ~error_handler
           ~response_handler in
       Lwt.async (fun () ->
-          Paf.run (module H2.Client_connection) ~sleep conn flow) ;
+          Dream_paf.run (module H2.Client_connection) ~sleep conn flow) ;
       Lwt.return_ok (Body_HTTP_2_0 (Wr, body))
   | (Some "http/1.1" | None), `V1 request ->
       let error_handler = error_handler_v1 edn error_handler in
@@ -132,7 +132,7 @@ let run ~sleep ?alpn ~error_handler ~response_handler edn request flow =
         Httpaf.Client_connection.request conn request ~error_handler
           ~response_handler in
       Lwt.async (fun () ->
-          Paf.run (module Httpaf_Client_connection) ~sleep conn flow) ;
+          Dream_paf.run (module Httpaf_Client_connection) ~sleep conn flow) ;
       Lwt.return_ok (Body_HTTP_1_1 (Wr, Body_wr body))
   | Some protocol, _ ->
       Lwt.return_error

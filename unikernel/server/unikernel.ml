@@ -27,10 +27,10 @@ module Make
   let error_handler _ ?request:_ _ _ = ()
 
   let get_certificate ?(production= false) cfg stackv4v6 =
-    Paf.init ~port:80 stackv4v6 >>= fun t ->
-    let service = Paf.http_service ~error_handler Letsencrypt.request_handler in
+    Dream_paf.init ~port:80 stackv4v6 >>= fun t ->
+    let service = Dream_paf.http_service ~error_handler Letsencrypt.request_handler in
     Lwt_switch.with_switch @@ fun stop ->
-    let `Initialized th = Paf.serve ~stop service t in
+    let `Initialized th = Dream_paf.serve ~stop service t in
     let ctx = Letsencrypt.ctx
       ~gethostbyname:(fun dns domain_name -> DNS.gethostbyname dns domain_name >>? fun ipv4 -> Lwt.return_ok (Ipaddr.V4 ipv4))
       ~authenticator
@@ -48,17 +48,17 @@ module Make
 
   let rock stackv4v6 v ~request_handler ~error_handler = match v with
     | HTTP port ->
-      Paf.init ~port stackv4v6 >>= fun t ->
-      let service = Paf.http_service ~error_handler:(fun _ -> error_handler)
+      Dream_paf.init ~port stackv4v6 >>= fun t ->
+      let service = Dream_paf.http_service ~error_handler:(fun _ -> error_handler)
         (fun _ -> request_handler) in
-      let `Initialized th = Paf.serve service t in th
+      let `Initialized th = Dream_paf.serve service t in th
     | HTTPS (port, cfg) ->
       get_certificate ~production:(Key_gen.production ()) cfg stackv4v6 >>= fun certificates ->
       let tls = Tls.Config.server ~certificates () in
-      Paf.init ~port stackv4v6 >>= fun t ->
-      let service = Paf.https_service ~tls ~error_handler:(fun _ -> error_handler)
+      Dream_paf.init ~port stackv4v6 >>= fun t ->
+      let service = Dream_paf.https_service ~tls ~error_handler:(fun _ -> error_handler)
         (fun _ -> request_handler) in
-      let `Initialized th = Paf.serve service t in th
+      let `Initialized th = Dream_paf.serve service t in th
 
   let host v =
     Result.bind (Domain_name.of_string v) Domain_name.host
