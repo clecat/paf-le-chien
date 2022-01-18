@@ -2,7 +2,7 @@ type 'c capability = Rd : [ `read ] capability | Wr : [ `write ] capability
 
 type body =
   | Body_HTTP_1_1 : 'c capability * 'c httpaf_body -> body
-  | Body_HTTP_2_0 : 'c capability * 'c H2.Body.t -> body
+  | Body_HTTP_2_0 : 'c capability * 'c Dream_h2.Body.t -> body
 
 and _ httpaf_body =
   | Body_wr : Dream_httpaf.Body.Writer.t -> [ `write ] httpaf_body
@@ -10,17 +10,17 @@ and _ httpaf_body =
 
 type response =
   | Response_HTTP_1_1 of Dream_httpaf.Response.t
-  | Response_HTTP_2_0 of H2.Response.t
+  | Response_HTTP_2_0 of Dream_h2.Response.t
 
 type request =
   | Request_HTTP_1_1 of Dream_httpaf.Request.t
-  | Request_HTTP_2_0 of H2.Request.t
+  | Request_HTTP_2_0 of Dream_h2.Request.t
 
-type reqd = Reqd_HTTP_1_1 of Dream_httpaf.Reqd.t | Reqd_HTTP_2_0 of H2.Reqd.t
+type reqd = Reqd_HTTP_1_1 of Dream_httpaf.Reqd.t | Reqd_HTTP_2_0 of Dream_h2.Reqd.t
 
 type headers =
   | Headers_HTTP_1_1 of Dream_httpaf.Headers.t
-  | Headers_HTTP_2_0 of H2.Headers.t
+  | Headers_HTTP_2_0 of Dream_h2.Headers.t
 
 let response_handler_v1_1 capability edn f resp body =
   f edn (Response_HTTP_1_1 resp) (Body_HTTP_1_1 (capability, body))
@@ -59,7 +59,7 @@ let error_handler_v1 edn f ?request error
   f edn ?request (error :> server_error) response
 
 let error_handler_v2 edn f ?request error
-    (response : H2.Headers.t -> [ `write ] H2.Body.t) =
+    (response : Dream_h2.Headers.t -> [ `write ] Dream_h2.Body.t) =
   let request = Option.map (fun req -> Request_HTTP_2_0 req) request in
   let response = function
     | Headers_HTTP_2_0 headers -> Body_HTTP_2_0 (Wr, response headers)
@@ -83,8 +83,8 @@ let service info ~error_handler ~request_handler accept close =
         let flow = info.injection flow in
         let error_handler = error_handler_v2 edn error_handler in
         let request_handler = request_handler_v2 edn request_handler in
-        let conn = H2.Server_connection.create ~error_handler request_handler in
-        Lwt.return_ok (flow, Dream_paf.Runtime ((module H2.Server_connection), conn))
+        let conn = Dream_h2.Server_connection.create ~error_handler request_handler in
+        Lwt.return_ok (flow, Dream_paf.Runtime ((module Dream_h2.Server_connection), conn))
     | Some protocol ->
         Lwt.return_error (`Msg (Fmt.str "Invalid protocol %S." protocol)) in
   Dream_paf.service connection accept close
@@ -93,8 +93,8 @@ type client_error =
   [ `Exn of exn
   | `Malformed_response of string
   | `Invalid_response_body_length_v1 of Dream_httpaf.Response.t
-  | `Invalid_response_body_length_v2 of H2.Response.t
-  | `Protocol_error of H2.Error_code.t * string ]
+  | `Invalid_response_body_length_v2 of Dream_h2.Response.t
+  | `Protocol_error of Dream_h2.Error_code.t * string ]
 
 type common_error = [ `Exn of exn | `Malformed_response of string ]
 
@@ -115,13 +115,13 @@ let run ~sleep ?alpn ~error_handler ~response_handler edn request flow =
       let error_handler = error_handler_v2 edn error_handler in
       let response_handler = response_handler_v2_0 Rd edn response_handler in
       let conn =
-        H2.Client_connection.create ?config:None ?push_handler:None
+        Dream_h2.Client_connection.create ?config:None ?push_handler:None
           ~error_handler in
       let body =
-        H2.Client_connection.request conn request ~error_handler
+        Dream_h2.Client_connection.request conn request ~error_handler
           ~response_handler in
       Lwt.async (fun () ->
-          Dream_paf.run (module H2.Client_connection) ~sleep conn flow) ;
+          Dream_paf.run (module Dream_h2.Client_connection) ~sleep conn flow) ;
       Lwt.return_ok (Body_HTTP_2_0 (Wr, body))
   | (Some "http/1.1" | None), `V1 request ->
       let error_handler = error_handler_v1 edn error_handler in

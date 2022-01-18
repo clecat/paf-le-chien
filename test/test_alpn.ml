@@ -178,7 +178,7 @@ let test02 =
   let response_handler () : Alpn.response -> Alpn.body -> unit = fun _ _ -> () in
   let service = service ~request_handler () in
   let tls = Tls.Config.client ~authenticator ~alpn_protocols:[ "h2" ] () in
-  let req = `V2 (H2.Request.create ~scheme:"https" `GET "/") in
+  let req = `V2 (Dream_h2.Request.create ~scheme:"https" `GET "/") in
   Lwt.both
     ( unix_stack () >|= Tcpip_stack_socket.V4V6.tcp >>= fun stack ->
       P.init ~port stack >>= fun t ->

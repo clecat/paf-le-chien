@@ -9,13 +9,13 @@
     - An injection function (available from [mimic])
 
     In other words, [Alpn] did the only choice to trust on [http/af] & [h2] to
-    handle HTTP/1.0, HTTP/1.1 and H2 protocols. *)
+    handle HTTP/1.0, HTTP/1.1 and Dream_h2 protocols. *)
 
 type 'c capability = Rd : [ `read ] capability | Wr : [ `write ] capability
 
 type body =
   | Body_HTTP_1_1 : 'c capability * 'c httpaf_body -> body
-  | Body_HTTP_2_0 : 'c capability * 'c H2.Body.t -> body
+  | Body_HTTP_2_0 : 'c capability * 'c Dream_h2.Body.t -> body
 
 and _ httpaf_body =
   | Body_wr : Dream_httpaf.Body.Writer.t -> [ `write ] httpaf_body
@@ -23,17 +23,17 @@ and _ httpaf_body =
 
 type response =
   | Response_HTTP_1_1 of Dream_httpaf.Response.t
-  | Response_HTTP_2_0 of H2.Response.t
+  | Response_HTTP_2_0 of Dream_h2.Response.t
 
 type request =
   | Request_HTTP_1_1 of Dream_httpaf.Request.t
-  | Request_HTTP_2_0 of H2.Request.t
+  | Request_HTTP_2_0 of Dream_h2.Request.t
 
-type reqd = Reqd_HTTP_1_1 of Dream_httpaf.Reqd.t | Reqd_HTTP_2_0 of H2.Reqd.t
+type reqd = Reqd_HTTP_1_1 of Dream_httpaf.Reqd.t | Reqd_HTTP_2_0 of Dream_h2.Reqd.t
 
 type headers =
   | Headers_HTTP_1_1 of Dream_httpaf.Headers.t
-  | Headers_HTTP_2_0 of H2.Headers.t
+  | Headers_HTTP_2_0 of Dream_h2.Headers.t
 
 type server_error =
   [ `Bad_gateway | `Bad_request | `Exn of exn | `Internal_server_error ]
@@ -131,8 +131,8 @@ type client_error =
   [ `Exn of exn
   | `Malformed_response of string
   | `Invalid_response_body_length_v1 of Dream_httpaf.Response.t
-  | `Invalid_response_body_length_v2 of H2.Response.t
-  | `Protocol_error of H2.Error_code.t * string ]
+  | `Invalid_response_body_length_v2 of Dream_h2.Response.t
+  | `Protocol_error of Dream_h2.Error_code.t * string ]
 
 val error_handler_v1 :
   'edn ->
@@ -141,7 +141,7 @@ val error_handler_v1 :
   unit
 
 val error_handler_v2 :
-  'edn -> ('edn -> client_error -> unit) -> H2.Client_connection.error -> unit
+  'edn -> ('edn -> client_error -> unit) -> Dream_h2.Client_connection.error -> unit
 
 val run :
   sleep:Dream_paf.sleep ->
@@ -149,7 +149,7 @@ val run :
   error_handler:('edn -> client_error -> unit) ->
   response_handler:('edn -> response -> body -> unit) ->
   'edn ->
-  [ `V1 of Dream_httpaf.Request.t | `V2 of H2.Request.t ] ->
+  [ `V1 of Dream_httpaf.Request.t | `V2 of Dream_h2.Request.t ] ->
   Mimic.flow ->
   (body, [> `Msg of string ]) result Lwt.t
 (** [run ~sleep ?alpn ~error_handler ~response_handler edn req flow] tries
@@ -162,7 +162,7 @@ val run :
     protocol according to:
 
     - the given [alpn] value
-    - the given [request] (if you want to communicate via HTTP/1.1 or H2)
+    - the given [request] (if you want to communicate via HTTP/1.1 or Dream_h2)
 
     Here is an example with [mimic]:
 

@@ -39,7 +39,7 @@ let response_handler th_err ~(f : Dream_httpaf.Response.t -> string -> unit Lwt.
     Alpn.response -> Alpn.body -> unit =
  fun resp body ->
   match (resp, body) with
-  | Alpn.Response_HTTP_2_0 _, _ -> failf "Invalid protocol H2"
+  | Alpn.Response_HTTP_2_0 _, _ -> failf "Invalid protocol Dream_h2"
   | ( Alpn.Response_HTTP_1_1 response,
       Alpn.Body_HTTP_1_1 (Alpn.Rd, Alpn.Body_rd body) ) -> (
       let buf = Buffer.create 0x100 in
@@ -175,7 +175,7 @@ let run uri =
   | Error err ->
       Log.err (fun m -> m "Got an error: %a." Mimic.pp_error err) ;
       Lwt.return_error err
-  | Ok (Alpn.Body_HTTP_2_0 _) -> Lwt.return_error (`Msg "Invalid protocol (H2)")
+  | Ok (Alpn.Body_HTTP_2_0 _) -> Lwt.return_error (`Msg "Invalid protocol (Dream_h2)")
   | Ok (Alpn.Body_HTTP_1_1 (Alpn.Wr, Alpn.Body_wr body)) -> (
       Dream_httpaf.Body.Writer.close body ;
       Lwt.pick [ (th >|= fun body -> `Body body); th_err ] >>= function

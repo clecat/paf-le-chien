@@ -28,7 +28,7 @@ depends: [
   "alcotest-lwt" {with-test}
   "bigstringaf" {>= "0.7.0"}
   "dream-httpaf" {>= "0.7.1"}
-  "h2" {>= "0.7.0"}
+  "dream-h2" {>= "0.7.0"}
   "faraday" {>= "0.7.2"}
   "tls" {>= "0.15.0"}
   "cstruct" {>= "6.0.0"}
@@ -39,5 +39,5 @@ dev-repo: "git+https://github.com/dinosaure/paf-le-chien.git"
 
 pin-depends: [
   [ "dream-httpaf.dev" "git+https://github.com/clecat/httpaf.git#fork" ]
-  [ "h2.dev" "git+https://github.com/clecat/ocaml-h2.git" ]
+  [ "dream-h2.dev" "git+https://github.com/clecat/ocaml-h2.git" ]
 ]

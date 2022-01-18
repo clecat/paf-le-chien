@@ -72,7 +72,7 @@ module type S = sig
     ctx:Mimic.ctx ->
     error_handler:(dst option -> Alpn.client_error -> unit) ->
     response_handler:(dst option -> Alpn.response -> Alpn.body -> unit) ->
-    [ `V1 of Dream_httpaf.Request.t | `V2 of H2.Request.t ] ->
+    [ `V1 of Dream_httpaf.Request.t | `V2 of Dream_h2.Request.t ] ->
     (Alpn.body, [> Mimic.error ]) result Lwt.t
 end
 

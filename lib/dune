@@ -8,7 +8,7 @@
  (name alpn)
  (public_name dream-paf.alpn)
  (modules alpn)
- (libraries dream-paf dream-httpaf h2))
+ (libraries dream-paf dream-httpaf dream-h2))
 
 (library
  (name dream_paf_mirage)
